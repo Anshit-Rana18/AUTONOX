@@ -1,0 +1,14 @@
+﻿.venv/
+venv/
+__pycache__/
+*.pyc
+.env
+
+# Generated outputs and data
+traffic_safety_system/data/outputs/
+traffic_safety_system/data/videos/
+traffic_safety_system/runs/
+
+# Archives and model weights
+*.zip
+*.pt

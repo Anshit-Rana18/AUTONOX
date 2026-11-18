@@ -1,0 +1,9 @@
+ultralytics
+opencv-python
+numpy
+scipy
+pyyaml
+shapely
+fast-plate-ocr[onnx]
+streamlit
+imageio-ffmpeg

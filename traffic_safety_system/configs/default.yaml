@@ -1,0 +1,90 @@
+camera_id: CAM-01
+
+video:
+  source: data/videos/SD.mp4   # later: 0 (webcam) or rtsp://...
+  output: data/outputs/result.mp4
+  lanes: configs/SD_lanes.json
+  stabilize_output: true
+  motion_mask: speed_zone  # none | speed_zone (mask out the speed zone for motion compensation)
+  draw_lanes: true
+  draw_speed_zone: false
+
+detector:
+  model: yolo11n.pt               # small and fast; move to a larger one if recall is poor
+  conf: 0.30
+  classes: [2, 3, 5, 7]           # COCO: car, motorcycle, bus, truck
+  imgsz: 960                      # 1280 is the max for YOLOv8n; 960 is a good compromise between speed and accuracy
+
+tracker:
+  type: configs/bytetrack_custom.yaml           # alternative: botsort.yaml || bytetrack.yaml
+
+events:
+  confirm_s: 0.5      # about 0.25-0.4 s of video; raise if boundary jitter causes false events
+  init_s: 0.1
+  rapid_s: 1.5          # transitions faster than this are flagged RAPID (an experimental parameter)
+  margin_frac: 0   # fraction of lane width to ignore at the edges (to avoid false lane)
+  popup_delay_s: 1.0
+  start_s: 0
+  end_s: 1000000
+
+plates:
+  model: models/plate_detector.pt
+  conf: 0.25
+  imgsz: 320
+  min_vehicle_h: 150     # skip vehicles smaller than this (px); too far to read anyway
+  every_n: 1            # run plate detection every Nth frame to save time
+  min_plate_w: 40
+  min_conf: 0.5
+  min_aspect: 1.5
+  max_aspect: 6.0
+  keep_top: 5
+  show: false
+  merge_window_s: 6.0
+  merge_max_dist: 1
+  max_frames: 1000000
+  keep_top: 5
+  
+  ocr_profile: turkey            # uk | uk_all | turkey | india
+  ocr_profiles:
+    uk:
+      regex: "[A-Z]{2}[0-9]{2}[A-Z]{3}"
+      expected_region: "United Kingdom"
+    uk_all:                  # also older UK layouts; looser, so more wrong reads can pass
+      regex: "([A-Z]{2}[0-9]{2}[A-Z]{3}|[A-Z][0-9]{1,3}[A-Z]{3}|[A-Z]{3}[0-9]{1,3}[A-Z])"
+      expected_region: "United Kingdom"
+    turkey:
+      regex: "(0[1-9]|[1-7][0-9]|8[01])[A-Z]{1,3}[0-9]{2,4}"
+      expected_region: "Turkey"
+    india:
+      regex: "([A-Z]{2}[0-9]{2}[A-Z]{1,3}[0-9]{4}|[0-9]{2}BH[0-9]{4}[A-Z]{2})"
+      expected_region: "India"
+
+  ocr:
+    model: cct-s-v2-global-model
+    min_region_p: 0.9
+    agree_min_char_p: 0.80
+    min_agree: 2
+
+  evidence:
+    pre_s: 3.0
+    post_s: 3.0
+    clip_width: 960
+
+speed:
+  calibration: configs/SD_speed.json
+  limit_kmh: 10            # PLACEHOLDER: set the limit for this road
+  tolerance_kmh: 0         # flag only above limit + tolerance
+  window_s: 1.0
+  min_window_s: 0.5
+  over_s: 0.5
+  only_in_zone: true
+  max_plausible_kmh: 250
+  contact_y_frac: 1.0      # 1.0 = bottom edge of the box; 0.92 can sit nearer the wheels
+
+overlay:
+  hide_lanes: true          # lane color tint
+  hide_speed_zone: true     # cyan speed rectangle
+  hide_outside: true        # vehicles whose contact point is outside every lane
+  hide_plates: false        # plate boxes and plate text
+  show_reason: false        # debug words (edge, outside, dead) in labels
+
